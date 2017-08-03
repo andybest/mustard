@@ -1,6 +1,5 @@
 SET(ARCH_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-# Include the platform directory
 add_subdirectory(${ARCH_DIR}/platform/${TARGET_PLATFORM})
 
 set(ARCH_LINKER_FLAGS ${PLATFORM_LINKER_FLAGS})
@@ -8,7 +7,10 @@ set(ARCH_C_FLAGS ${PLATFORM_C_FLAGS})
 set(ARCH_CXX_FLAGS ${PLATFORM_CXX_FLAGS})
 set(ARCH_ASM_FLAGS ${PLATFORM_ASM_FLAGS})
 
-set(ARCH_SRCS boot/kmain.c)
+set(ARCH_SRCS 
+    boot/x86init.cpp
+    drivers/PCTerminalDriver.h
+    drivers/PCTerminalDriver.cpp)
 
 # Add the path onto the front of each source file
 PREPEND_PATH(ARCH_SRCS ${CMAKE_CURRENT_LIST_DIR} ${ARCH_SRCS})

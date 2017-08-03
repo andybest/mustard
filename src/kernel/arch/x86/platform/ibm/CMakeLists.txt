@@ -1,7 +1,7 @@
 set(PLATFORM_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PLATFORM_LINKER_FLAGS "-T ${CMAKE_CURRENT_LIST_DIR}/linker.ld")
-set(PLATFORM_C_FLAGS "-target -i386-elf -march=i386 -g -fbuiltin -fno-omit-frame-pointer")
-set(PLATFORM_CXX_FLAGS "-target -i386-elf -march=i386 -g -fbuiltin -fno-omit-frame-pointer")
+set(PLATFORM_C_FLAGS "-target i386-none-elf -march=i386 -g -fbuiltin -fno-omit-frame-pointer")
+set(PLATFORM_CXX_FLAGS "-target i386-none-elf -march=i386 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti")
 set(PLATFORM_ASM_FLAGS "-felf")
 
 set(PLATFORM_SRCS start.nasm)

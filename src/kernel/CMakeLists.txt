@@ -10,8 +10,21 @@ SET(TARGET_ARCH x86)
 SET(TARGET_PLATFORM ibm)
 
 add_subdirectory(arch/${TARGET_ARCH})
+include_directories(${ARCH_INCLUDE_DIR})
+message("${ARCH_INCLUDE_DIR}")
 
-set(KERNEL_SRCS ${ARCH_SRCS})
+add_subdirectory(boot)
+
+set(KERNEL_SRCS 
+    ${ARCH_SRCS}
+    ${BOOT_SRCS})
+
+# Include headers in sources
+file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+source_group("include" FILES ${HEADERS})
+
+add_executable(kernel.elf ${HEADERS} ${KERNEL_SRCS})
 
 set(CMAKE_C_FLAGS ${ARCH_C_FLAGS})
 set(CMAKE_CXX_FLAGS ${ARCH_CXX_FLAGS})
@@ -26,7 +39,7 @@ SET(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_CXX_LINK_FLAGS> <OBJECTS> -
 SET(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> ${CMAKE_ASM_FLAGS} -o <OBJECT> <SOURCE>")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BUILD_DIRECTORY})
-add_executable(kernel.elf ${ARCH_SRCS})
+
 
 set_target_properties(kernel.elf
     PROPERTIES
