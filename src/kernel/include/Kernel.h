@@ -17,3 +17,6 @@ public:
 private:
     Platform *platform_;
 };
+
+
+void kputs(const char *str);

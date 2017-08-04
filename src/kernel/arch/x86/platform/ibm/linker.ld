@@ -1,38 +1,52 @@
-/* The bootloader will look at this image and start execution at the symbol
-   designated as the entry point. */
 ENTRY(_start)
+KERNEL_HIGH_VMA = 0xC0000000;
 
-/* Tell where the various sections of the object files will be put in the final
-   kernel image. */
-SECTIONS
-{
-  . = 0x00100000;
-  /* You can use extern link_kernel_start in C to find where your kernel starts */
-  link_kernel_start = .;
-
-  /* Multiboot header must be in the first 4K of the kernel */
-  .multiboot : {
-    *(.multiboot)
-  }
-
-  .text : {
-    *(.text)
-  }
-
-  .rodata ALIGN (0x1000) : {
-    *(.rodata)
-  }
-
-  .data ALIGN (0x1000) : {
-    *(.data)
-  }
-
-  .bss : {
-    sbss = .;
-    *(COMMON)
-    *(.bss)
-    ebss = .;
-  }
-  /* You can use extern link_kernel_end in C to find where your kernel ends */
-  link_kernel_end = .;
+SECTIONS {
+    . = 1M;
+    KERNEL_BOOT_VMA = .;
+    
+    .boot : ALIGN(4k) {
+        *(.multiboot)
+        *(.bootstrap)
+        . = ALIGN(4k);
+    }
+    
+    . += KERNEL_HIGH_VMA;
+    _core_start = .;
+    
+    .text : AT(ADDR(.text) - KERNEL_HIGH_VMA) ALIGN(4k) {
+        _core_code = .;
+        *(.text.*)
+        *(.text)
+    }
+    
+	.rodata : AT(ADDR(.rodata) - KERNEL_HIGH_VMA) ALIGN(4k) {
+		*(.rodata.*)
+		*(.rodata)
+	}
+    
+	/* Read-write data (initialized) */
+	.data : AT(ADDR(.data) - KERNEL_HIGH_VMA) ALIGN(4K) {
+        _core_data = .;
+		*(.data.*)
+		*(.data)
+	}
+    
+	/* Read-write data (uninitialized) and stack */
+	.bss : AT(ADDR(.bss) - KERNEL_HIGH_VMA) {
+        _core_bss = .;
+		*(.bss.*)
+		*(.bss)
+		*(COMMON)
+        _core_ebss = .;
+	}
+    
+	/* Sections to be discarded */
+	/DISCARD/ : {
+		*(.text.exit)
+		*(.data.exit)
+		*(.exitcall.exit)
+	}
+    
+    _core_end = .;
 }

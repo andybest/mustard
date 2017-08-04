@@ -9,7 +9,7 @@ void Kernel::init(Platform *platform)
 {
     platform_ = platform;
 
-    this->terminal()->putString("Kernel Initialization Complete\n");
+    kputs("Kernel Initialized\n");
 }
 
 Kernel *Kernel::shared()

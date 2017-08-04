@@ -12,7 +12,7 @@ public:
     void clearScreen();
     
 private:
-    uint16_t *kVideoMemoryBase = (uint16_t *)0xB8000;
+    uint16_t *kVideoMemoryBase = (uint16_t *)0xC00B8000;
     const uint32_t kVideoMemorySize = 80*25;
     const uint32_t kTerminalWidth = 80;
     const uint32_t kTerminalHeight = 25;
