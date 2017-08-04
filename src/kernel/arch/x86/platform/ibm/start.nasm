@@ -61,11 +61,11 @@ loop_kernel_map:
     jnz loop_kernel_map
     
     ; Create the page directory
-    lea edi, [PHYS(boot_page_directory)]
-    lea edx, [PHYS(boot_page_table) + 0x0003]
-    ; Number of entries in the directory
+    mov edi, PHYS(boot_page_directory)
+    mov edx, PHYS(boot_page_table) + 0x003
     
-    lea ecx, [0x0400]
+    ; Number of entries in the directory
+    mov ecx, 0x400
     
 loop_directory_entry:
     ; Set up page directory entry
@@ -91,11 +91,9 @@ loop_directory_entry:
     or ecx, 0x80010000
     mov cr0, ecx
     
-    jmp twirl
-    
     ; The cpu is still running in the higher half. Jump to the higher half
     ; with an absolute jump
-    lea ecx, [_higher_half]
+    mov ecx, _higher_half
     jmp ecx
     
 twirl:

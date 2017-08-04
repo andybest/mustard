@@ -6,9 +6,7 @@
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
 // get PHYS() and VIRT_BASE defines
-#define VIRT_BASE 0x80000000
-#define	PHYS(x) ((x) - VIRT_BASE)
-#define	VIRT(x) ((x) + VIRT_BASE)
+#include "phys_virt.h"
 	
 /*
  * Declare a multiboot header that marks the program as a kernel.
@@ -58,7 +56,7 @@ _start:
 	 */
 
 	// physical address of boot_page_table
-	lea %(PHYS(boot_page_table)), %edi
+	lea PHYS(boot_page_table), %edi
 	// start identity map from 0 as "present, writable"
 	lea 0x003, %eax
 	// number of pages to the kernel address space
@@ -139,7 +137,7 @@ _start:
 	movl %cr0, %ecx
 	orl $0x80010000, %ecx
 	movl %ecx, %cr0
-
+    
 	/*
 	 * The kernel is now mapped to higher half but the CPU is
 	 * still running in lower half. Jump to higher half with an
