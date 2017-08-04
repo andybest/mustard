@@ -9,6 +9,8 @@ set(ARCH_ASM_FLAGS ${PLATFORM_ASM_FLAGS})
 
 set(ARCH_SRCS 
     boot/x86init.cpp
+    boot/x86Platform.h
+    boot/x86Platform.cpp
     drivers/PCTerminalDriver.h
     drivers/PCTerminalDriver.cpp)
 

@@ -1,9 +1,11 @@
 #pragma once
-#include "terminal.h"
+#include "Terminal.h"
 
 /* Functions that platforms should implement */
 
-void platform_init();
+class Platform;
+
+Platform *platform_init();
 
 class Platform {
 public:

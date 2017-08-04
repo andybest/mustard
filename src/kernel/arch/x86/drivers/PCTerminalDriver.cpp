@@ -1,5 +1,4 @@
 
-#include "terminal.h"
 #include "PCTerminalDriver.h"
 
 PCTerminalDriver::PCTerminalDriver()

@@ -1,8 +1,9 @@
-#include "platform.h"
+#include "Platform.h"
 
 extern "C" void kernel_main(void) {
     // Platform dependant initialization
-    platform_init();
-    
+    Platform *p = platform_init();
+
+    p->defaultTerminal()->putString("Kernel init\n");
     
 }

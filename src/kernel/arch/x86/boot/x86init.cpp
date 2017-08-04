@@ -1,8 +1,7 @@
-#include "platform.h"
-#include "../drivers/PCTerminalDriver.h"
+#include "Platform.h"
+#include "x86Platform.h"
 
-void platform_init() {
-    PCTerminalDriver terminalDriver;
-    terminalDriver.clearScreen();
-    terminalDriver.putChar('H');
+Platform *platform_init() {
+    static x86Platform platform;
+    return &platform;
 }

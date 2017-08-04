@@ -1,9 +1,9 @@
 #pragma once
 
-#include "terminal.h"
+#include "Terminal.h"
 #include <stdint.h>
 
-class PCTerminalDriver: TerminalDriver {
+class PCTerminalDriver: public TerminalDriver {
 public:
     PCTerminalDriver();
     
