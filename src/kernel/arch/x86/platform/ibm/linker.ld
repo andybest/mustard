@@ -74,6 +74,8 @@ SECTIONS
 		*(.bss)
 		*(COMMON)
 	}
+    
+    KERNEL_PHYS_END = . - VIRT_BASE;
 
 	/*
 	 * The compiler may produce other sections, by default it will

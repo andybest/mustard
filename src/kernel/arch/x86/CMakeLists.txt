@@ -7,12 +7,13 @@ set(ARCH_C_FLAGS ${PLATFORM_C_FLAGS})
 set(ARCH_CXX_FLAGS ${PLATFORM_CXX_FLAGS})
 set(ARCH_ASM_FLAGS ${PLATFORM_ASM_FLAGS})
 
-set(ARCH_SRCS 
+set(ARCH_SRCS
     boot/x86init.cpp
     boot/x86Platform.h
     boot/x86Platform.cpp
     drivers/PCTerminalDriver.h
-    drivers/PCTerminalDriver.cpp)
+    drivers/PCTerminalDriver.cpp
+    mm/mm.cpp)
 
 # Add the path onto the front of each source file
 PREPEND_PATH(ARCH_SRCS ${CMAKE_CURRENT_LIST_DIR} ${ARCH_SRCS})

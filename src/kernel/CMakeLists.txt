@@ -13,12 +13,10 @@ add_subdirectory(arch/${TARGET_ARCH})
 include_directories(${ARCH_INCLUDE_DIR})
 message("${ARCH_INCLUDE_DIR}")
 
-add_subdirectory(boot)
 add_subdirectory(kernel)
 
 set(KERNEL_SRCS 
     ${ARCH_SRCS}
-    ${BOOT_SRCS}
     ${KERNEL_SRCS})
 
 # Include headers in sources

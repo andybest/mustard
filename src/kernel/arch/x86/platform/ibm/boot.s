@@ -200,10 +200,13 @@ _higher_half:
 	 * Note: C can have constructors too. It's a compiler
 	 * extension but can be verry usefull.
 	 */
+    
+    //addl VIRT_BASE, %ebx
+    push %ebx                // Push address of multiboot structure
 
 	// Enter the high-level kernel.
 	call kernel_main
-
+    
 	/*
 	 * If the system has nothing more to do, put the computer into
 	 * an infinite loop. To do that:
