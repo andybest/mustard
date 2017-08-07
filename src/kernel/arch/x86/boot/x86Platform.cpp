@@ -16,7 +16,7 @@ TerminalDriver *x86Platform::defaultTerminal()
 void x86Platform::initialize() {
     this->term_.clearScreen();
 
-    //init_gdt();
+    init_gdt();
 
     kputs("Init Page Allocator\n");
     pageAllocator_.initialize();
