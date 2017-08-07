@@ -68,7 +68,6 @@ void PageAllocator::initialize() {
     // Initialize the actual page tables
     uint32_t kernelEnd4kAligned = kernelPages * 4096;
     initialize_kernel_pagetables(kernelPages, pageTablesNeeded, kernelEnd4kAligned);
-
 }
 
 uint32_t PageAllocator::page_tables_needed(const uint32_t kernelPages) const {
@@ -83,6 +82,7 @@ void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, con
                                                  const uint32_t kernelEnd4kAligned) {
     // Number of pages to add- making sure to map in the extra pages needed for the page tables
     uint32_t pagesToProcess = kernelPages + pageTablesNeeded;
+    uint32_t freePageFrames = 0;
 
     for (uint32_t i = 0; i < pageTablesNeeded; i++) {
 
@@ -101,6 +101,7 @@ void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, con
             pageTable[p] = ptEntry;
 
             if (pagesToProcess == 0) {
+                freePageFrames = 1024 - p - 1;
                 break;
             }
             pagesToProcess--;
@@ -111,6 +112,10 @@ void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, con
         uint32_t pageDirectoryOffset = ptVirtualAddress >> 22;
         page_directory[pageDirectoryOffset] = pageDirectoryEntry;
     }
+
+    kputs("Page frames free: 0x");
+        print_hex(freePageFrames);
+        kputs("\n");
 }
 
 uint32_t PageAllocator::kernel_4k_page_count() const {
@@ -130,15 +135,16 @@ void PageAllocator::initialize_page_directory() const {// Initialize the page di
 }
 
 void PageAllocator::switch_page_directory(uint32_t page_directory_phys) const {// Enable paging
-    __asm__ volatile(
+    asm volatile(
     // Enable 4MB pages
-    "movl %%cr4, %%eax\n"
-            "orl $0x00000010, %%eax\n"
-            "movl %%eax, %%cr4\n"
+        "movl %%cr4, %%eax\n\t"
+        "orl $0x00000010, %%eax\n\t"
+        "movl %%eax, %%cr4\n\t"
 
-            // Move page directory
-            "movl %%ecx, %%eax\n"
-            "movl %%eax, %%cr3\n"
+    // Move page directory
+        "movl %%ecx, %%eax\n\t"
+        "movl %%eax, %%cr3\n\t"
     ::"c" (page_directory_phys)
+    : "eax", "ecx"
     );
 }
