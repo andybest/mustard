@@ -8,6 +8,7 @@ Kernel::Kernel()
 void Kernel::init(Platform *platform)
 {
     platform_ = platform;
+    platform->initialize();
 
     kputs("Kernel Initialized\n");
 }

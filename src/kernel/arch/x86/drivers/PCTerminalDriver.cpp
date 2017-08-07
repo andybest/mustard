@@ -13,7 +13,7 @@ void PCTerminalDriver::putChar(const char c)
         newLine();
     } else {
         uint16_t *currentChar = kVideoMemoryBase + (cursorY_ * kTerminalWidth) + cursorX_;
-        *currentChar = c | 0x0700;
+        *currentChar = static_cast<uint16_t>(c | 0x0700);
 
         cursorX_++;
 
@@ -36,8 +36,8 @@ void PCTerminalDriver::newLine()
     cursorY_ += 1;
 
     if(cursorY_ >= kTerminalHeight) {
-        scrollBuffer();
-        cursorY_ = kTerminalHeight - 1;
+        //scrollBuffer();
+        cursorY_ = static_cast<uint8_t>(kTerminalHeight - 1);
     }
 }
 
