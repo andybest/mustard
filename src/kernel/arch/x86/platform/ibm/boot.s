@@ -275,3 +275,8 @@ boot_page_directory:
 	.skip 4096
 boot_page_table:
 	.skip 4096 * 1024
+
+.section .data
+.global KERNEL_MEM_END
+KERNEL_MEM_END:
+.long KERNEL_PHYS_END

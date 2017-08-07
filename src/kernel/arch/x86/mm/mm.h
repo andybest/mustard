@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // Page Directory Flags
 
 enum PageDirectoryFlag {
@@ -12,7 +14,7 @@ enum PageDirectoryFlag {
     kPageDirectoryFlagZero              = 1 << 6,
     kPageDirectoryFlagPageSize          = 1 << 7,
     kPageDirectoryFlagIgnored           = 1 << 8
-}
+};
 
 enum PageTableFlag {
     kPageTableFlagPresent           = 1,
@@ -24,4 +26,22 @@ enum PageTableFlag {
     kPageTableFlagDirty             = 1 << 6,
     kPageTableFlagZero              = 1 << 7,
     kPageTableFlagGlobal            = 1 << 8
-}
+};
+
+class PageAllocator {
+public:
+    PageAllocator(uint32_t kernel_physical_end, uint32_t kernel_location);
+private:
+    void initialize();
+
+    uint32_t kernel_location_;
+    uint32_t kernel_physical_end_;
+
+    void switch_page_directory(uint32_t page_directory_phys) const;
+
+    void initialize_page_directory() const;
+
+    uint32_t kernel_4k_page_count() const;
+
+    void initialize_kernel_pagetables(uint32_t kernelPages, uint32_t pageTablesNeeded, uint32_t kernelEnd4kAligned) const;
+};

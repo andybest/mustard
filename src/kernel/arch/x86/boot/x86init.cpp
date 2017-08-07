@@ -3,7 +3,9 @@
 #include "Kernel.h"
 #include "multiboot.h"
 #include "../platform/ibm/phys_virt.h"
+#include "../mm/mm.h"
 
+extern const uint32_t KERNEL_MEM_END;
 
 Platform *platform_init() {
     static x86Platform platform;
@@ -60,4 +62,24 @@ extern "C" void kernel_main(MultibootInfo *mbInfoPhys) {
     Kernel::shared()->init(p);
     
     get_memory_map(mbInfo);
+
+    kputs("Kernel physical end: 0x");
+    print_hex(KERNEL_MEM_END);
+    kputs("\n");
+
+    // Number of pages to allocate for kernel
+
+    uint32_t pages = KERNEL_MEM_END >> 12;
+
+    // Round up if it's not on a page boundary
+    if( (KERNEL_MEM_END & 0xFFF) > 0){
+        pages += 1;
+    }
+
+    kputs("Kernel pages: ");
+    print_hex(pages);
+
+    kputs("Enabling memory manager\n");
+    PageAllocator pa(KERNEL_MEM_END, VIRT_BASE);
+    kputs("Done!\n");
 }
