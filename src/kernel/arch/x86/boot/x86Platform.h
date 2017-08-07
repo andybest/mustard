@@ -25,4 +25,6 @@ private:
     PageAllocator pageAllocator_ = PageAllocator(KERNEL_MEM_END, VIRT_BASE);
 
     void get_memory_map(MultibootInfo *pInfo);
+
+    void init_page_allocator();
 };

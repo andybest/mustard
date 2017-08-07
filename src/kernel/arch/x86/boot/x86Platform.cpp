@@ -10,18 +10,21 @@ x86Platform::x86Platform(MultibootInfo *pInfo) {
 
 TerminalDriver *x86Platform::defaultTerminal()
 {
-    return reinterpret_cast<TerminalDriver *>(&term_);
+    return static_cast<TerminalDriver *>(&term_);
 }
 
 void x86Platform::initialize() {
     this->term_.clearScreen();
 
     init_gdt();
-
-    kputs("Init Page Allocator\n");
-    pageAllocator_.initialize();
+    init_page_allocator();
 
     kputs("Platform initialized\n");
+}
+
+void x86Platform::init_page_allocator() {
+    kputs("Init Page Allocator\n");
+    pageAllocator_.initialize();
 }
 
 void x86Platform::init_gdt() {
@@ -29,7 +32,7 @@ void x86Platform::init_gdt() {
     gdt_.create_gdt();
 }
 
-void x86Platform::get_memory_map(MultibootInfo *pInfo) {
+void x86Platform::get_memory_map(MultibootInfo *mbInfo) {
     /*MultibootMemMap *mmap = (MultibootMemMap *)(mbInfo->mmap_addr + VIRT_BASE);
     kputs("Memory map:\n");
 

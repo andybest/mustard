@@ -15,6 +15,8 @@ set(ARCH_SRCS
         descriptorTables/gdt.s
         descriptorTables/gdt.h
         descriptorTables/gdt.cpp
+        descriptorTables/Interrupts.h
+        descriptorTables/Interrupts.cpp
         drivers/PCTerminalDriver.h
         drivers/PCTerminalDriver.cpp
         mm/mm.cpp)
