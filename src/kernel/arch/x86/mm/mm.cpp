@@ -81,7 +81,8 @@ uint32_t PageAllocator::page_tables_needed(const uint32_t kernelPages) const {
 void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, const uint32_t pageTablesNeeded,
                                                  const uint32_t kernelEnd4kAligned) {
     // Number of pages to add- making sure to map in the extra pages needed for the page tables
-    uint32_t pagesToProcess = kernelPages + pageTablesNeeded;
+    // plus one reserved page frame for allocating new page tables
+    uint32_t pagesToProcess = kernelPages + pageTablesNeeded + 1;
     uint32_t freePageFrames = 0;
 
     for (uint32_t i = 0; i < pageTablesNeeded; i++) {
@@ -102,6 +103,10 @@ void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, con
 
             if (pagesToProcess == 0) {
                 freePageFrames = 1024 - p - 1;
+                reserved_page_frame_idx_ = p;
+                reserved_page_table_virtual_ =  ptVirtualAddress;
+
+                kernel_pages_end_ = (uint32_t)pageTable + 4096 - VIRT_BASE;
                 break;
             }
             pagesToProcess--;
@@ -113,9 +118,13 @@ void PageAllocator::initialize_kernel_pagetables(const uint32_t kernelPages, con
         page_directory[pageDirectoryOffset] = pageDirectoryEntry;
     }
 
-    kputs("Page frames free: 0x");
-        print_hex(freePageFrames);
-        kputs("\n");
+    kputs("Kernel physical end: 0x");
+    print_hex(kernel_physical_end_);
+    kputs("\n");
+
+    kputs("Kernel pages end: 0x");
+    print_hex(kernel_pages_end_);
+    kputs("\n");
 }
 
 uint32_t PageAllocator::kernel_4k_page_count() const {

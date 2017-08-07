@@ -38,6 +38,11 @@ private:
     uint32_t kernel_location_;
     uint32_t kernel_physical_end_;
 
+    // End of kernel + initial page tables
+    uint32_t kernel_pages_end_;
+    uint32_t reserved_page_frame_idx_;
+    uint32_t reserved_page_table_virtual_;
+
     void switch_page_directory(uint32_t page_directory_phys) const;
 
     void initialize_page_directory() const;
