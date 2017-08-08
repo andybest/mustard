@@ -5,8 +5,8 @@
 struct IDTEntry {
     uint16_t base_low;
     uint16_t segment_selector;
-    uint8_t zero;
-    uint8_t flags;
+    uint8_t  zero;
+    uint8_t  flags;
     uint16_t base_high;
 } __attribute((packed));
 
@@ -24,12 +24,12 @@ struct InterruptFrame {
 } __attribute((packed));
 
 class Idt {
-public:
+   public:
     Idt();
 
     void initialize();
 
-private:
+   private:
     void idt_flush();
 
     IDTPointer idt_ptr_;

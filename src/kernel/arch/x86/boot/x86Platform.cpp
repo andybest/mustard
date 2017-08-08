@@ -1,15 +1,11 @@
 
 #include "x86Platform.h"
-#include "Kernel.h"
 #include "../platform/ibm/phys_virt.h"
+#include "Kernel.h"
 
+x86Platform::x86Platform(MultibootInfo *pInfo) { this->get_memory_map(pInfo); }
 
-x86Platform::x86Platform(MultibootInfo *pInfo) {
-    this->get_memory_map(pInfo);
-}
-
-TerminalDriver *x86Platform::defaultTerminal()
-{
+TerminalDriver *x86Platform::defaultTerminal() {
     return static_cast<TerminalDriver *>(&term_);
 }
 
@@ -33,10 +29,12 @@ void x86Platform::init_gdt() {
 }
 
 void x86Platform::get_memory_map(MultibootInfo *mbInfo) {
-    /*MultibootMemMap *mmap = (MultibootMemMap *)(mbInfo->mmap_addr + VIRT_BASE);
+    /*MultibootMemMap *mmap = (MultibootMemMap *)(mbInfo->mmap_addr +
+    VIRT_BASE);
     kputs("Memory map:\n");
 
-    while(mmap < (MultibootMemMap *)(mbInfo->mmap_addr + mbInfo->mmap_length + VIRT_BASE)) {
+    while(mmap < (MultibootMemMap *)(mbInfo->mmap_addr + mbInfo->mmap_length +
+    VIRT_BASE)) {
         kputs("    Base address: 0x");
         print_hex(mmap->base_addr >> 32 & 0xFFFFFFFF);
         print_hex(mmap->base_addr & 0xFFFFFFFF);
@@ -55,8 +53,7 @@ void x86Platform::get_memory_map(MultibootInfo *mbInfo) {
 
         kputs("\n");
 
-        mmap = (MultibootMemMap*) ( (uint32_t)mmap + mmap->size + sizeof(mmap->size) );
+        mmap = (MultibootMemMap*) ( (uint32_t)mmap + mmap->size +
+    sizeof(mmap->size) );
     }*/
 }
-
-

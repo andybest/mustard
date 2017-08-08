@@ -1,6 +1,6 @@
+#include <Kernel.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <Kernel.h>
 
 #if UINT32_MAX == UINTPTR_MAX
 #define STACK_CHK_GUARD 0xe2dee396
@@ -10,9 +10,8 @@
 
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 
-__attribute__((noreturn))
-extern "C" void __stack_chk_fail(void)
-{
+__attribute__((noreturn)) extern "C" void __stack_chk_fail(void) {
     kputs("Stack smashed!");
-    while(true){}
+    while (true) {
+    }
 }

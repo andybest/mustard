@@ -1,17 +1,16 @@
 #pragma once
 
 class TerminalDriver {
-public:
+   public:
     virtual void putChar(const char c) = 0;
-    
+
     void putString(const char *str) {
         unsigned int i = 0;
 
-        while(str[i] != '\0') {
+        while (str[i] != '\0') {
             putChar(str[i]);
             i++;
         }
-
     }
 };
 

@@ -4,19 +4,18 @@
 #include "Terminal.h"
 
 class Kernel {
-public:
+   public:
     Kernel();
-    
+
     // Pointer to static instance
     static Kernel *shared();
-    
+
     TerminalDriver *terminal();
 
     void init(Platform *platform);
 
-private:
+   private:
     Platform *platform_;
 };
-
 
 void kputs(const char *str);
