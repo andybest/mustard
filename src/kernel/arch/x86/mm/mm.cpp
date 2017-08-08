@@ -154,6 +154,6 @@ void PageAllocator::switch_page_directory(uint32_t page_directory_phys) const {/
         "movl %%ecx, %%eax\n\t"
         "movl %%eax, %%cr3\n\t"
     ::"c" (page_directory_phys)
-    : "eax", "ecx"
+    : "eax"
     );
 }
