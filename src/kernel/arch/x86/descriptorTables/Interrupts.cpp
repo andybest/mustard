@@ -8,12 +8,55 @@ Idt::Idt() {}
 IDTEntry   idt_entries_[256];
 IDTPointer idt_pointer_;
 
+const char *exception_name_[32] = {
+        "Divide by Zero",
+        "Debug",
+        "Non-maskable Interrupt",
+        "Breakpoint",
+        "Overflow",
+        "Bound Range Exceeded",
+        "Invalid Opcode",
+        "Device Not Availiable",
+        "Double Fault",
+        "Coprocessor Segment Overrun",
+        "Bad TSS",
+        "Segment Not Present",
+        "Stack Fault",
+        "General Protection Fault",
+        "Page Fault",
+        "Unknown Interrupt",
+        "Coprocessor Fault",
+        "Alignment Check",
+        "Machine Check",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved"
+    }; 
+
 extern "C" void idt_flush();
 
 extern "C" void isr_handler(InterruptFrame *frame) {
-    kputs("Interrupt 0x");
-    print_hex(frame->int_no);
-    kputs(" triggered.\n");
+    if(frame->int_no < 32) {
+        kputs("Interrupt 0x");
+        print_hex(frame->int_no);
+        kputs(" triggered.\n    ");
+        kputs(exception_name_[frame->int_no]);
+        kputs(" Exception!\n");
+    } else {
+        kputs("Interrupt 0x");
+        print_hex(frame->int_no);
+        kputs(" triggered.\n");
+    }
 }
 
 void Idt::initialize() {

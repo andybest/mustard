@@ -16,8 +16,7 @@ struct IDTPointer {
 } __attribute((packed));
 
 struct InterruptFrame {
-    // segment and paging regs
-    uint32_t ds, cr2;
+    uint32_t gs, fs, es, ds;
 
     // same order as pusha
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
