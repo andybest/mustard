@@ -28,6 +28,26 @@ enum PageTableFlag {
     kPageTableFlagGlobal         = 1 << 8
 };
 
+typedef union {
+    struct Components {
+        uint32_t present: 1;
+        uint32_t read_write: 1;
+        uint32_t user_supervisor: 1;
+        uint32_t write_through: 1;
+        uint32_t cache_disabled: 1;
+        uint32_t accessed: 1;
+        uint32_t dirty: 1;
+        uint32_t zero: 1;
+        uint32_t global: 1;
+        uint32_t available: 3;        
+        uint32_t physical_address: 20;
+    };
+    Components components;
+    uint32_t value;
+} PageFrame;
+
+
+
 constexpr uint32_t kernel_page_table_array_size();
 
 class PageAllocator {

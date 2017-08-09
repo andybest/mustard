@@ -60,11 +60,18 @@ void PageAllocator::initialize() {
     kprintf("Kernel pages: %d\n", kernelPages);
     kprintf("Kernel physical start: 0x%x\n", kernel_physical_start);
 
+    PageFrame p;
+    p.components.physical_address = 0xCAFE5;
+    p.components.present = 1;
+
+    kprintf("Page frame: 0x%x", p.value);
+
     initialize_page_directory();
     initialize_kernel_pagetables();
 }
 
 void PageAllocator::initialize_kernel_pagetables() {
+
 }
 
 void PageAllocator::initialize_page_directory()
