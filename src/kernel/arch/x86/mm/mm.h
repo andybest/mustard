@@ -30,13 +30,14 @@ enum PageTableFlag {
 
 class PageAllocator {
    public:
-    PageAllocator(uint32_t kernel_physical_end, uint32_t kernel_location);
+    PageAllocator(uint32_t kernel_start, uint32_t kernel_end, uint32_t kernel_location);
 
     void initialize();
 
    private:
     uint32_t kernel_location_;
-    uint32_t kernel_physical_end_;
+    uint32_t kernel_start_;
+    uint32_t kernel_end_;
 
     // End of kernel + initial page tables
     uint32_t kernel_pages_end_;

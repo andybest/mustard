@@ -112,10 +112,6 @@ void Idt::initialize() {
 
 void Idt::idt_set_entry(uint8_t idx, uint32_t base, uint16_t selector,
                         uint8_t flags) {
-    kputs("Adding isr handler for 0x");
-    print_hex(base);
-    kputs("\n");
-
     idt_entries_[idx].base_low  = base & 0xFFFF;
     idt_entries_[idx].base_high = base >> 16;
 

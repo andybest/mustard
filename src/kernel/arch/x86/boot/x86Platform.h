@@ -8,7 +8,8 @@
 #include "Platform.h"
 #include "multiboot.h"
 
-extern const uint32_t KERNEL_MEM_END;
+extern const uint32_t _kernel_start;
+extern const uint32_t _kernel_end;
 
 class x86Platform : public Platform {
    public:
@@ -25,7 +26,7 @@ class x86Platform : public Platform {
     PCTerminalDriver term_;
     Gdt              gdt_;
     Idt              idt_;
-    PageAllocator    pageAllocator_ = PageAllocator(KERNEL_MEM_END, VIRT_BASE);
+    PageAllocator    pageAllocator_ = PageAllocator(_kernel_start, _kernel_end, VIRT_BASE);
 
     void get_memory_map(MultibootInfo *pInfo);
 

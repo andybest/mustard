@@ -47,6 +47,7 @@ SECTIONS
 	 * takes care of mapping the code to higher half.
 	 */
 	. = . + VIRT_BASE;
+	_kernel_start_ = .;
 	/*
 	 * The .text section contains all the code for the kernel
 	 * other than the bootstrap code.
@@ -73,9 +74,8 @@ SECTIONS
 		*(.bss.*)
 		*(.bss)
 		*(COMMON)
+		_kernel_end_ = .;
 	}
-    
-    KERNEL_PHYS_END = . - VIRT_BASE;
 
 	/*
 	 * The compiler may produce other sections, by default it will

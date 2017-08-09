@@ -277,6 +277,10 @@ boot_page_table:
 	.skip 4096 * 1024
 
 .section .data
-.global KERNEL_MEM_END
-KERNEL_MEM_END:
-.long KERNEL_PHYS_END
+.global _kernel_start
+_kernel_start:
+.long _kernel_start_
+
+.global _kernel_end
+_kernel_end:
+.long _kernel_end_

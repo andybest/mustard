@@ -19,16 +19,26 @@ uint32_t page_table_temp[1024] __attribute__((aligned(4096)));
 
 extern void print_hex(uint32_t hex);
 
-PageAllocator::PageAllocator(uint32_t kernel_physical_end,
+PageAllocator::PageAllocator(uint32_t kernel_start, uint32_t kernel_end,
                              uint32_t kernel_location) {
-    kernel_location_     = kernel_location;
-    kernel_physical_end_ = kernel_physical_end;
+    kernel_location_ = kernel_location;
+    kernel_start_    = kernel_start;
+    kernel_end_      = kernel_end;
 }
 
 void PageAllocator::initialize() {
+    kprintf("Kernel Start: 0x%x  Kernel End: %x\n", kernel_start_, kernel_end_);
+    kprintf("Kernel Size: %d\n", kernel_end_ - kernel_start_);
+
     // Calculate the number of 4k pages to allocate to the kernel
     const uint32_t kernelPages = kernel_4k_page_count();
+    uint32_t kernel_physical_start = kernel_start_ - kernel_location_;
 
+    kprintf("Kernel pages: %d\n", kernelPages);
+    kprintf("Kernel physical start: 0x%x\n", kernel_physical_start);
+
+    return;
+    /*
     initialize_page_directory();
 
     // How many 4MB pages do we need for the kernel?
@@ -69,6 +79,7 @@ void PageAllocator::initialize() {
     uint32_t kernelEnd4kAligned = kernelPages * 4096;
     initialize_kernel_pagetables(kernelPages, pageTablesNeeded,
                                  kernelEnd4kAligned);
+                                 */
 }
 
 uint32_t PageAllocator::page_tables_needed(const uint32_t kernelPages) const {
@@ -122,20 +133,13 @@ void PageAllocator::initialize_kernel_pagetables(
         uint32_t pageDirectoryOffset        = ptVirtualAddress >> 22;
         page_directory[pageDirectoryOffset] = pageDirectoryEntry;
     }
-
-    kputs("Kernel physical end: 0x");
-    print_hex(kernel_physical_end_);
-    kputs("\n");
-
-    kputs("Kernel pages end: 0x");
-    print_hex(kernel_pages_end_);
-    kputs("\n");
 }
 
 uint32_t PageAllocator::kernel_4k_page_count() const {
-    uint32_t kernelPages = kernel_physical_end_ >> 12;
+    uint32_t kernel_size = kernel_end_ - kernel_start_;
+    uint32_t kernelPages = kernel_size >> 12;
 
-    if ((kernel_physical_end_ & 0xFFF) > 0) {
+    if ((kernel_size & 0xFFF) > 0) {
         kernelPages++;
     }
     return kernelPages;
