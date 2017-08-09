@@ -20,3 +20,4 @@ class Kernel {
 
 void kputs(const char *str);
 void print_hex(const uint32_t hex);
+void kprintf(const char *fmt, ...);

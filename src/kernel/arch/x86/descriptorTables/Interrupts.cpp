@@ -57,6 +57,8 @@ extern "C" void isr_handler(InterruptFrame *frame) {
         print_hex(frame->int_no);
         kputs(" triggered.\n");
     }
+
+    while(true) {}
 }
 
 void Idt::initialize() {
@@ -106,7 +108,6 @@ void Idt::initialize() {
     idt_set_entry(31, (uint32_t)isr31, 0x08, 0x8E);
 
     idt_flush((uint32_t)&idt_pointer_);
-    // asm volatile("int $0x4");
 }
 
 void Idt::idt_set_entry(uint8_t idx, uint32_t base, uint16_t selector,
