@@ -28,17 +28,15 @@ enum PageTableFlag {
     kPageTableFlagGlobal         = 1 << 8
 };
 
+constexpr uint32_t kernel_page_table_array_size();
+
 class PageAllocator {
    public:
-    PageAllocator(uint32_t kernel_start, uint32_t kernel_end, uint32_t kernel_location);
+    PageAllocator();
 
     void initialize();
 
    private:
-    uint32_t kernel_location_;
-    uint32_t kernel_start_;
-    uint32_t kernel_end_;
-
     // End of kernel + initial page tables
     uint32_t kernel_pages_end_;
     uint32_t reserved_page_frame_idx_;
@@ -48,11 +46,5 @@ class PageAllocator {
 
     void initialize_page_directory() const;
 
-    uint32_t kernel_4k_page_count() const;
-
-    void initialize_kernel_pagetables(uint32_t kernelPages,
-                                      uint32_t pageTablesNeeded,
-                                      uint32_t kernelEnd4kAligned);
-
-    uint32_t page_tables_needed(const uint32_t kernelPages) const;
+    void initialize_kernel_pagetables();
 };

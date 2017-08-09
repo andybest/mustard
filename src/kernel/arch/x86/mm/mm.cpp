@@ -13,136 +13,58 @@
 
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 
-// Keep a 4kb block free for use as a temporaty page table to allocate
-// other page tables
-uint32_t page_table_temp[1024] __attribute__((aligned(4096)));
+extern const uint32_t _kernel_start;
+extern const uint32_t _kernel_end;
 
-extern void print_hex(uint32_t hex);
+constexpr uint32_t _kernel_size() {
+    return _kernel_end - _kernel_start;
+} 
 
-PageAllocator::PageAllocator(uint32_t kernel_start, uint32_t kernel_end,
-                             uint32_t kernel_location) {
-    kernel_location_ = kernel_location;
-    kernel_start_    = kernel_start;
-    kernel_end_      = kernel_end;
+constexpr uint32_t kernel_4k_page_count() {
+    //const uint32_t kernelSize = _kernel_end - _kernel_start;
+    uint32_t kernelPhysicalOffset = (_kernel_end - VIRT_BASE);
+    uint32_t kernelPages = kernelPhysicalOffset >> 12;
+    if ((kernelPhysicalOffset & 0xFFF) > 0) {
+        kernelPages++;
+    }
+
+    // Make sure to save an extra page after the kernel for a temporary
+    // page for allocating new page tables
+    kernelPages++;
+    return kernelPages;
+}
+
+constexpr uint32_t num_page_tables_for_pages(uint32_t num_pages) {
+    uint32_t pages = num_pages >> 10;
+    if ((num_pages & 0x3FF) > 0) {
+        pages += 1;
+    }
+    return pages;
+}
+
+constexpr uint32_t kernel_page_table_array_size() {
+    return num_page_tables_for_pages(kernel_4k_page_count()) * 1024;
+}
+
+PageAllocator::PageAllocator() {
 }
 
 void PageAllocator::initialize() {
-    kprintf("Kernel Start: 0x%x  Kernel End: %x\n", kernel_start_, kernel_end_);
-    kprintf("Kernel Size: %d\n", kernel_end_ - kernel_start_);
+    kprintf("Kernel Start: 0x%x  Kernel End: 0x%x\n", _kernel_start, _kernel_end);
+    kprintf("Kernel Size: %d\n", _kernel_end - _kernel_start);
 
     // Calculate the number of 4k pages to allocate to the kernel
     const uint32_t kernelPages = kernel_4k_page_count();
-    uint32_t kernel_physical_start = kernel_start_ - kernel_location_;
+    uint32_t kernel_physical_start = _kernel_start;
 
     kprintf("Kernel pages: %d\n", kernelPages);
     kprintf("Kernel physical start: 0x%x\n", kernel_physical_start);
 
-    return;
-    /*
     initialize_page_directory();
-
-    // How many 4MB pages do we need for the kernel?
-    uint32_t pages4mb = kernel_physical_end_ >> 22;
-    if ((kernel_physical_end_ & PAGE_DIRECTORY_MASK) > 0) {
-        pages4mb++;
-    }
-
-    // How many page tables do we need to allocate for the kernel?
-    uint32_t pageTablesNeeded = page_tables_needed(kernelPages);
-
-    // Check that the amount of free memory is enough to cover the kernel and
-    // the initial page tables
-    if (((pages4mb << 22) - (kernelPages << 12)) < (pageTablesNeeded << 12)) {
-        pages4mb += 1;
-    }
-
-    // Set up the 4mb pages
-    for (uint32_t i = 0; i < pages4mb; i++) {
-        uint32_t physicalAddress = i << 22;
-        uint32_t virtualAddress  = physicalAddress + VIRT_BASE;
-
-        uint32_t pdOffset = virtualAddress >> 22;
-        // Create a page directory entry- present, read/write, 4MB
-        uint32_t pdEntry =
-            (physicalAddress & 0xFFC00000) | kPageDirectoryFlagPresent |
-            kPageDirectoryFlagReadWrite | kPageDirectoryFlagPageSize;
-        page_directory[pdOffset] = pdEntry;
-    }
-
-    // Calculate the physical address of the page directory
-    uint32_t page_directory_phys = ((uint32_t)page_directory) - VIRT_BASE;
-
-    // Temporarily use the new page directory
-    switch_page_directory(page_directory_phys);
-
-    // Initialize the actual page tables
-    uint32_t kernelEnd4kAligned = kernelPages * 4096;
-    initialize_kernel_pagetables(kernelPages, pageTablesNeeded,
-                                 kernelEnd4kAligned);
-                                 */
+    initialize_kernel_pagetables();
 }
 
-uint32_t PageAllocator::page_tables_needed(const uint32_t kernelPages) const {
-    uint32_t pageTablesNeeded = (kernelPages >> 10);
-    if ((kernelPages & 0x3FF) > 0) {
-        pageTablesNeeded += 1;
-    }
-    return pageTablesNeeded;
-}
-
-void PageAllocator::initialize_kernel_pagetables(
-    const uint32_t kernelPages, const uint32_t pageTablesNeeded,
-    const uint32_t kernelEnd4kAligned) {
-    // Number of pages to add- making sure to map in the extra pages needed for
-    // the page tables
-    // plus one reserved page frame for allocating new page tables
-    uint32_t pagesToProcess = kernelPages + pageTablesNeeded + 1;
-    uint32_t freePageFrames = 0;
-
-    for (uint32_t i = 0; i < pageTablesNeeded; i++) {
-        // Physical address of the new page table
-        auto pageTable =
-            (uint32_t *)(kernelEnd4kAligned + (i * 1024) + VIRT_BASE);
-
-        kputs("Allocating page table: 0x");
-        print_hex((uint32_t)pageTable);
-        kputs("\n");
-
-        uint32_t ptPhysicalAddress = i * 4096;
-        uint32_t ptVirtualAddress  = ptPhysicalAddress + VIRT_BASE;
-
-        for (uint32_t p = 0; p < 1024; p++) {
-            uint32_t ptEntry = ((p + (i * 1024)) << 12) |
-                               kPageTableFlagPresent | kPageTableFlagReadWrite;
-            pageTable[p] = ptEntry;
-
-            if (pagesToProcess == 0) {
-                freePageFrames               = 1024 - p - 1;
-                reserved_page_frame_idx_     = p;
-                reserved_page_table_virtual_ = ptVirtualAddress;
-
-                kernel_pages_end_ = (uint32_t)pageTable + 4096 - VIRT_BASE;
-                break;
-            }
-            pagesToProcess--;
-        }
-
-        uint32_t pageDirectoryEntry = (ptPhysicalAddress & 0xFFC00000) |
-                                      kPageDirectoryFlagPresent |
-                                      kPageDirectoryFlagReadWrite;
-        uint32_t pageDirectoryOffset        = ptVirtualAddress >> 22;
-        page_directory[pageDirectoryOffset] = pageDirectoryEntry;
-    }
-}
-
-uint32_t PageAllocator::kernel_4k_page_count() const {
-    uint32_t kernel_size = kernel_end_ - kernel_start_;
-    uint32_t kernelPages = kernel_size >> 12;
-
-    if ((kernel_size & 0xFFF) > 0) {
-        kernelPages++;
-    }
-    return kernelPages;
+void PageAllocator::initialize_kernel_pagetables() {
 }
 
 void PageAllocator::initialize_page_directory()
