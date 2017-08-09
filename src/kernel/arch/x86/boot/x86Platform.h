@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../descriptorTables/Interrupts.h"
 #include "../descriptorTables/gdt.h"
 #include "../drivers/PCTerminalDriver.h"
 #include "../mm/mm.h"
@@ -19,9 +20,11 @@ class x86Platform : public Platform {
 
    private:
     void init_gdt();
+    void init_idt(); 
 
     PCTerminalDriver term_;
     Gdt              gdt_;
+    Idt              idt_;
     PageAllocator    pageAllocator_ = PageAllocator(KERNEL_MEM_END, VIRT_BASE);
 
     void get_memory_map(MultibootInfo *pInfo);

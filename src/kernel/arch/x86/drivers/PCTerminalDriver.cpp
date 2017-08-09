@@ -33,7 +33,7 @@ void PCTerminalDriver::newLine() {
     cursorY_ += 1;
 
     if (cursorY_ >= kTerminalHeight) {
-        // scrollBuffer();
+         scrollBuffer();
         cursorY_ = static_cast<uint8_t>(kTerminalHeight - 1);
     }
 }

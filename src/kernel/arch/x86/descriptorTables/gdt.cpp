@@ -1,7 +1,8 @@
 #include "gdt.h"
 #include "../platform/ibm/phys_virt.h"
+#include <stdint.h>
 
-extern void gdt_flush_asm(uint32_t addr);
+extern "C" void gdt_flush_asm(uint32_t gdt_ptr);
 
 void Gdt::create_gdt() {
     gdt_pointer_.limit = (sizeof(GDTEntry) * 5) - 1;
@@ -21,6 +22,8 @@ void Gdt::create_gdt() {
 
     // User mode data segment
     gdt_set_entry(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
+
+    gdt_flush();
 }
 
 void Gdt::gdt_set_entry(int32_t idx, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity) {
@@ -36,17 +39,5 @@ void Gdt::gdt_set_entry(int32_t idx, uint32_t base, uint32_t limit, uint8_t acce
 }
 
 void Gdt::gdt_flush() {
-    __asm__ volatile (
-            "lgdt (%%eax)\n"          // Load new GDT
-
-            "movw $0x10, %%ax\n"
-            "movw %%ax, %%ds\n"
-            "movw %%ax, %%es\n"
-            "movw %%ax, %%fs\n"
-            "movw %%ax, %%gs\n"
-            "movw %%ax, %%ss\n"
-            "ljmp $0x80, $flush\n"
-            "flush: nop"
-    :: "a" ((uint32_t)&gdt_pointer_)
-    );
+    gdt_flush_asm((uint32_t)&gdt_pointer_);
 }

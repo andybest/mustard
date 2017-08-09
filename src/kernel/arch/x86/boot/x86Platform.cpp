@@ -12,8 +12,12 @@ TerminalDriver *x86Platform::defaultTerminal() {
 void x86Platform::initialize() {
     this->term_.clearScreen();
 
-    init_gdt();
     init_page_allocator();
+
+    init_gdt();
+    init_idt();
+
+    asm volatile("int $0x4");
 
     kputs("Platform initialized\n");
 }
@@ -26,6 +30,11 @@ void x86Platform::init_page_allocator() {
 void x86Platform::init_gdt() {
     kputs("Init GDT\n");
     gdt_.create_gdt();
+}
+
+void x86Platform::init_idt() {
+    kputs("Init IDT\n");
+    idt_.initialize();
 }
 
 void x86Platform::get_memory_map(MultibootInfo *mbInfo) {
