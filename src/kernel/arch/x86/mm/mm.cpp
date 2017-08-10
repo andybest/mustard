@@ -66,8 +66,11 @@ void PageAllocator::initialize() {
     // Switch to the new page directory!
     switch_page_directory(((uint32_t)&page_directory) - VIRT_BASE);
 
-    uint32_t freePageAddress = next_free_physical_page() * 4096;
-    kprintf("First free page: 0x%x\n", freePageAddress);
+    uint32_t *page = map_new_page();
+    for(int i = 0; i < 32; i++) {
+        page = map_new_page();
+    }
+    page[0] = 1;
 }
 
 void PageAllocator::initialize_kernel_pagetables() {
@@ -83,13 +86,16 @@ void PageAllocator::initialize_kernel_pagetables() {
     pageCount += numPageTables + 1;
 
     for (uint32_t pt = 0; pt < numPageTables; pt++) {
+        kprintf("Adding page table: 0x%x\n", pageTableVirtualAddress);
         // Mark the page table's physical address as taken
         set_physical_page_taken(pageTablePhysicalAddress >> 12);
 
-        uint32_t numPagesInTable = pageCount - (pt * 1024);
+        uint32_t numPagesInTable = pageCount - (pt *  1024);
         if (numPagesInTable > 1024) {
             numPagesInTable = 1024;
         }
+
+        kprintf("Allocating %d pages\n", numPagesInTable);
 
         // Pointer to the current page table virtual address
         uint32_t *ptPtr = (uint32_t *)pageTableVirtualAddress;
@@ -213,6 +219,60 @@ int PageAllocator::next_free_kernel_page_directory_entry() {
     }
 
     return -1;
+}
+
+int PageAllocator::next_free_page() {
+    for(uint32_t i = 0; i < kernel_process_space_table_count_; i++) {
+        if(kernel_page_map_[i].present) {
+            int firstFreePage = kernel_page_map_[i].first_free_page();
+            if(firstFreePage >= 0) {
+                kprintf("FF %d\n", firstFreePage);
+                return firstFreePage + (i * 1024);
+            }
+        }
+    }
+
+    return -1;
+}
+
+uint32_t* PageAllocator::map_new_page() {
+    int nextFreePage = next_free_page();
+    if(nextFreePage == -1) {
+        map_new_page_table();
+        nextFreePage = next_free_page();
+    }
+
+    if(nextFreePage < 0) {
+        kpanic("Unable to allocate page!");
+    }
+
+    int nextFreePhysicalPage = next_free_physical_page();
+    if(nextFreePhysicalPage < 0) {
+        kpanic("Unable to allocate page- out of memory!");
+    }
+
+    kprintf("Next free page: 0x%x\n", nextFreePage);
+    kprintf("Next free physical page: 0x%x\n", nextFreePhysicalPage);
+
+    PageFrame frame;
+    frame.physical_address = nextFreePhysicalPage;
+    frame.present = 1;
+    frame.read_write = 1;
+
+    uint32_t pageMapIdx = ((uint32_t)nextFreePage) >> 0x10;
+    uint32_t pageIdx = nextFreePage & 0x3FF;
+
+    uint32_t *pageTable = kernel_page_map_[pageMapIdx].page_table_virtual_address;
+
+    pageTable[pageIdx] = frame.to_uint32();
+
+    kernel_page_map_[pageMapIdx].set_page_taken(pageIdx);
+    set_physical_page_taken(nextFreePhysicalPage);
+
+    uint32_t pageAddress = (nextFreePage << 12) + VIRT_BASE;
+    kprintf("Allocated page: 0x%x\n", pageAddress);
+
+    return (uint32_t *)pageAddress;
 }
 
 bool PageAllocator::map_new_page_table() {

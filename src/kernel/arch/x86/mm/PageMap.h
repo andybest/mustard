@@ -4,7 +4,7 @@
 
 struct PageMap {
     static const uint32_t page_bitmap_size = 1024 / 32;
-    uint32_t              page_bitmap[page_bitmap_size];
+    uint32_t              page_bitmap[1024/32];
     uint32_t*             page_table_virtual_address;
     bool                  present;
 

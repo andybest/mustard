@@ -91,8 +91,10 @@ class PageAllocator {
     void set_physical_page_taken(uint32_t index);
     void set_physical_page_free(uint32_t index);
     int next_free_physical_page();
+    int next_free_page();
 
     void flush_tlb(uint32_t address);
     int next_free_kernel_page_directory_entry();
+    uint32_t* map_new_page();
     bool map_new_page_table();
 };
