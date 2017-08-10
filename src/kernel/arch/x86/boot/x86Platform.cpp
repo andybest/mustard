@@ -12,10 +12,9 @@ TerminalDriver *x86Platform::defaultTerminal() {
 void x86Platform::initialize() {
     this->term_.clearScreen();
 
-    init_page_allocator();
-
     init_gdt();
     init_idt();
+    init_page_allocator();
 
     kputs("Platform initialized\n");
 }
