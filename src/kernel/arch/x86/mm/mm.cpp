@@ -1,6 +1,5 @@
 #include "mm.h"
 #include <stdint.h>
-#include "../platform/ibm/phys_virt.h"
 #include "Kernel.h"
 
 #define PAGE_DIRECTORY_OFFSET(x) (x >> 22)
@@ -66,23 +65,27 @@ void PageAllocator::initialize() {
 
     // Switch to the new page directory!
     switch_page_directory(((uint32_t)&page_directory) - VIRT_BASE);
+
+    uint32_t freePageAddress = next_free_physical_page() * 4096;
+    kprintf("First free page: 0x%x\n", freePageAddress);
 }
 
 void PageAllocator::initialize_kernel_pagetables() {
     // Initial physical address of the first page table.
-    // This is at the 4k aligned address of the end of the kernel,
-    // plus 1024 bytes to save space for our temporary page table.
-    uint32_t initialPagetablePhysicalAddress =
-        kernel_physical_end_4k_aligned() + 4096;
-
-    temp_page_table_physical_address_ = kernel_physical_end_4k_aligned();
+    // This is at the 4k aligned address of the end of the kernel
+    uint32_t initialPagetablePhysicalAddress = kernel_physical_end_4k_aligned();
 
     uint32_t pageTablePhysicalAddress = initialPagetablePhysicalAddress;
     uint32_t pageTableVirtualAddress  = pageTablePhysicalAddress + VIRT_BASE;
     uint32_t pageCount                = kernel_4k_page_count();
     uint32_t numPageTables            = num_page_tables_for_pages(pageCount);
+    numPageTables = num_page_tables_for_pages(pageCount + numPageTables);
+    pageCount += numPageTables + 1;
 
     for (uint32_t pt = 0; pt < numPageTables; pt++) {
+        // Mark the page table's physical address as taken
+        set_physical_page_taken(pageTablePhysicalAddress >> 12);
+
         uint32_t numPagesInTable = pageCount - (pt * 1024);
         if (numPagesInTable > 1024) {
             numPagesInTable = 1024;
@@ -90,6 +93,9 @@ void PageAllocator::initialize_kernel_pagetables() {
 
         // Pointer to the current page table virtual address
         uint32_t *ptPtr = (uint32_t *)pageTableVirtualAddress;
+
+        kernel_page_map_[pt].present                    = true;
+        kernel_page_map_[pt].page_table_virtual_address = ptPtr;
 
         for (uint32_t frameNum = 0; frameNum < numPagesInTable; frameNum++) {
             uint32_t pageFramePhysicalAddress =
@@ -101,6 +107,13 @@ void PageAllocator::initialize_kernel_pagetables() {
             frame.read_write       = 1;
 
             ptPtr[frameNum] = frame.to_uint32();
+
+            // Set the page as taken in the page map
+            kernel_page_map_[pt].set_page_taken(frameNum);
+            set_physical_page_taken((pt * 1024) + frameNum);
+
+            temp_page_table_entry_address_ = (uint32_t)&ptPtr[frameNum];
+            temp_page_table_virtual_address_ = pageFramePhysicalAddress + VIRT_BASE;
         }
 
         uint32_t directoryIndex = ((pt * 1024 * 4096) + VIRT_BASE) >> 22;
@@ -138,4 +151,129 @@ void PageAllocator::switch_page_directory(
         "movl %%ecx, %%eax\n\t"
         "movl %%eax, %%cr3\n\t" ::"c"(page_directory_phys)
         : "eax");
+}
+
+void PageAllocator::set_physical_page_taken(uint32_t index) {
+    if (index > kernel_physical_memory_bitmap_count_) {
+        kpanic(
+            "PageAllocator::set_physical_page_taken called with an index "
+            "greater than max physical memory: %d",
+            index);
+    }
+
+    uint32_t bitmapIndex = index >> 5;
+    uint32_t bitIndex    = 31 - (index & 0x1F);
+
+    physical_memory_bitmap_[bitmapIndex] |= (0x1 << bitIndex);
+}
+
+void PageAllocator::set_physical_page_free(uint32_t index) {
+    if (index > kernel_physical_memory_bitmap_count_) {
+        kpanic(
+            "PageAllocator::set_physical_page_free called with an index "
+            "greater than max physical memory: %d",
+            index);
+    }
+
+    uint32_t bitmapIndex = index >> 5;
+    uint32_t bitIndex    = 31 - (index & 0x1F);
+    uint32_t bitMask     = ~(1 << bitIndex);
+
+    physical_memory_bitmap_[bitmapIndex] &= bitMask;
+}
+
+int PageAllocator::next_free_physical_page() {
+    // Iterate through the bitmap and find the first free page
+    for (uint32_t idx = 0; idx < kernel_physical_memory_bitmap_count_; idx++) {
+        uint32_t bitmapEntry = physical_memory_bitmap_[idx];
+        if (bitmapEntry != 0xFFFFFFFF) {
+            for (int32_t bit = 31; bit >= 0; bit--) {
+                uint32_t pageStatus = (bitmapEntry >> bit) & 0x1;
+
+                if (pageStatus == 0) {
+                    uint32_t pageIndex = (idx * 32) + (31 - bit);
+                    return pageIndex;
+                }
+            }
+        }
+    }
+
+    return -1;
+}
+
+void PageAllocator::flush_tlb(uint32_t address) {
+    asm volatile("invlpg (%0)" ::"r"(address) : "memory");
+}
+
+int PageAllocator::next_free_kernel_page_directory_entry() {
+    for(uint32_t i = 0; i < kernel_process_space_table_count_; i++) {
+        if(kernel_page_map_[i].present == false) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+bool PageAllocator::map_new_page_table() {
+    int nextPhysicalPageIdx = next_free_physical_page();
+    if (nextPhysicalPageIdx < 0) {
+        return false;
+    }
+
+    uint32_t pageTablePhysicalAddress = nextPhysicalPageIdx << 12;
+
+    // Temporarily map this page table into the spare page frame
+    PageFrame tempFrame;
+    tempFrame.physical_address = nextPhysicalPageIdx;
+    tempFrame.present          = true;
+    tempFrame.read_write       = true;
+
+    uint32_t *ptPtr = (uint32_t *)temp_page_table_entry_address_;
+    *ptPtr          = tempFrame.to_uint32();
+
+    // Flush the TLB for this entry with its virtual address
+    flush_tlb(temp_page_table_entry_address_ + VIRT_BASE);
+
+    // Construct a pointer to the new page table
+    uint32_t *newPageTable =
+        (uint32_t *)temp_page_table_virtual_address_;
+
+    // Identity map the new page table to itself
+    PageFrame ptFrame;
+    ptFrame.physical_address = nextPhysicalPageIdx;
+    ptFrame.present          = 1;
+    ptFrame.read_write       = 1;
+
+    newPageTable[0] = ptFrame.to_uint32();
+
+    // Create a page directory entry for the new page
+    int nextFreePageDirectoryEntry = next_free_kernel_page_directory_entry();
+
+    if(nextFreePageDirectoryEntry < 0) {
+        kpanic("No more free pages!\n");
+    }
+
+    PageDirectoryEntry entry;
+    entry.page_table_physical_address = pageTablePhysicalAddress;
+    entry.present = 1;
+    entry.read_write = 1;
+
+    page_directory[nextFreePageDirectoryEntry + (VIRT_BASE >> 22)] = entry.to_uint32();
+    
+    // Mark the page table's address as taken
+    kernel_page_map_[nextFreePageDirectoryEntry].clear();
+    kernel_page_map_[nextFreePageDirectoryEntry].set_page_taken(0);
+    kernel_page_map_[nextFreePageDirectoryEntry].page_table_virtual_address = newPageTable;
+    kernel_page_map_[nextFreePageDirectoryEntry].present = true;
+
+    // Mark the physical page as taken
+    set_physical_page_taken(nextPhysicalPageIdx);
+
+    // Unmap the temp frame
+    *ptPtr = 0;
+
+    flush_tlb(temp_page_table_entry_address_ + VIRT_BASE);
+
+    return true;
 }

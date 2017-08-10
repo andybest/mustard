@@ -182,3 +182,16 @@ void kprintf(const char *fmt, ...) {
     kputs(buffer);
     va_end(ap);
 }
+
+void kpanic(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    char buffer[1024];
+    kvasprintf(buffer, fmt, ap);
+    kputs("PANIC: ");
+    kputs(buffer);
+    va_end(ap);
+
+    while(true) {}
+}

@@ -1,32 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-
-// Page Directory Flags
-
-enum PageDirectoryFlag {
-    kPageDirectoryFlagPresent        = 1,
-    kPageDirectoryFlagReadWrite      = 1 << 1,
-    kPageDirectoryFlagUserSupervisor = 1 << 2,
-    kPageDirectoryFlagWriteThrough   = 1 << 3,
-    kPageDirectoryFlagCacheDisabled  = 1 << 4,
-    kPageDirectoryFlagAccessed       = 1 << 5,
-    kPageDirectoryFlagZero           = 1 << 6,
-    kPageDirectoryFlagPageSize       = 1 << 7,
-    kPageDirectoryFlagIgnored        = 1 << 8
-};
-
-enum PageTableFlag {
-    kPageTableFlagPresent        = 1,
-    kPageTableFlagReadWrite      = 1 << 1,
-    kPageTableFlagUserSupervisor = 1 << 2,
-    kPageTableFlagWriteThrough   = 1 << 3,
-    kPageTableFlagCacheDisabled  = 1 << 4,
-    kPageTableFlagAccessed       = 1 << 5,
-    kPageTableFlagDirty          = 1 << 6,
-    kPageTableFlagZero           = 1 << 7,
-    kPageTableFlagGlobal         = 1 << 8
-};
+#include "../platform/ibm/phys_virt.h"
+#include "Kernel.h"
+#include "PageMap.h"
 
 struct PageFrame {
     uint32_t present : 1;
@@ -54,7 +31,6 @@ struct PageFrame {
 
         return (physical_address << 12) | flags;
     }
-
 };
 
 struct PageDirectoryEntry {
@@ -82,7 +58,6 @@ struct PageDirectoryEntry {
 
         return (page_table_physical_address << 12) | flags;
     }
-
 };
 
 constexpr uint32_t kernel_page_table_array_size();
@@ -94,16 +69,30 @@ class PageAllocator {
     void initialize();
 
    private:
-    // End of kernel + initial page tables
-    uint32_t kernel_pages_end_;
-    uint32_t reserved_page_frame_idx_;
-    uint32_t reserved_page_table_virtual_;
 
-    uint32_t temp_page_table_physical_address_;
+    static uint32_t constexpr kernel_process_space_table_count_ =
+        ((((0xFFFFFFFF - VIRT_BASE) + 1) / 4096) / 1024);
+
+    PageMap  kernel_page_map_[kernel_process_space_table_count_];
+    uint32_t temp_page_table_entry_address_;
+    uint32_t temp_page_table_virtual_address_;
+
+    static uint32_t constexpr kernel_max_physical_memory_pages_ = 0x100000;
+    static uint32_t constexpr kernel_physical_memory_bitmap_count_ =
+        kernel_max_physical_memory_pages_ >> 5;
+
+    // Bitmap to hold allocated pages in physical memory
+    uint32_t physical_memory_bitmap_[kernel_physical_memory_bitmap_count_];
 
     void switch_page_directory(uint32_t page_directory_phys) const;
-
     void initialize_page_directory() const;
-
     void initialize_kernel_pagetables();
+
+    void set_physical_page_taken(uint32_t index);
+    void set_physical_page_free(uint32_t index);
+    int next_free_physical_page();
+
+    void flush_tlb(uint32_t address);
+    int next_free_kernel_page_directory_entry();
+    bool map_new_page_table();
 };

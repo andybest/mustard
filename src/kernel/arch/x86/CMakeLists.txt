@@ -20,7 +20,10 @@ set(ARCH_SRCS
         descriptorTables/Interrupts.cpp
         drivers/PCTerminalDriver.h
         drivers/PCTerminalDriver.cpp
-        mm/mm.cpp)
+        mm/mm.h
+        mm/mm.cpp
+        mm/PageMap.h
+        mm/PageMap.cpp)
 
 # Add the path onto the front of each source file
 PREPEND_PATH(ARCH_SRCS ${CMAKE_CURRENT_LIST_DIR} ${ARCH_SRCS})
