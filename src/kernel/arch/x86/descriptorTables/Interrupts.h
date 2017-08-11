@@ -16,6 +16,7 @@ struct IDTPointer {
 } __attribute((packed));
 
 struct InterruptFrame {
+    uint32_t cr2;
     uint32_t gs, fs, es, ds;
 
     // same order as pusha

@@ -9,6 +9,11 @@ PCTerminalDriver::PCTerminalDriver() {
 void PCTerminalDriver::putChar(const char c) {
     if (c == '\n') {
         newLine();
+    } else if(c == '\t') {
+        putChar(' ');
+        putChar(' ');
+        putChar(' ');
+        putChar(' ');
     } else {
         uint16_t *currentChar =
             kVideoMemoryBase + (cursorY_ * kTerminalWidth) + cursorX_;

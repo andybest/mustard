@@ -14,7 +14,7 @@ int PageMap::first_free_page() const {
     for (uint32_t idx = 0; idx < page_bitmap_size; idx++) {
         uint32_t bitmapEntry = page_bitmap[idx];
         if (bitmapEntry != 0xFFFFFFFF) {
-            for (int32_t bit = 0; bit < 32; bit--) {
+            for (int32_t bit = 0; bit < 32; bit++) {
                 uint32_t pageStatus = (bitmapEntry >> bit) & 0x1;
 
                 if (pageStatus == 0) {
@@ -43,7 +43,6 @@ void PageMap::set_page_taken(uint32_t idx) {
     uint32_t old = page_bitmap[bitmapIndex];
     page_bitmap[bitmapIndex] |= (0x1 << bitIndex);
     uint32_t new_b = page_bitmap[bitmapIndex];
-    kprintf("Old 0x%x  New 0x%x\n", old, new_b);
 }
 
 void PageMap::set_page_free(uint32_t idx) {

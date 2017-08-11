@@ -25,6 +25,8 @@ isr_common:
     push %es
     push %fs
     push %gs
+    movl %cr2, %eax
+    push %eax
 
     movw $0x10, %ax
     movw %ax, %ds

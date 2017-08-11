@@ -45,8 +45,24 @@ const char *exception_name_[32] = {
 
 extern "C" void idt_flush();
 
+void page_fault_handler(InterruptFrame *frame) {
+    bool protection_violation = frame->err_code & 0x1;
+    bool write = (frame->err_code & (1 << 1)) > 0;
+    bool user_mode = (frame->err_code & (1 << 2)) > 0;
+
+    kpanic("Page fault: 0x%x at address: 0x%x\n"
+        "\t%s\n\t%s\n\t%s\n", 
+        frame->err_code, 
+        frame->cr2,
+        protection_violation ? "Protection violation": "Page not present",
+        write ? "Write": "Read",
+        user_mode ? "User Mode": "Supervisor Mode");
+}
+
 extern "C" void isr_handler(InterruptFrame *frame) {
-    if(frame->int_no < 32) {
+    if (frame->int_no == 0xE) {
+        page_fault_handler(frame);
+    } else if(frame->int_no < 32) {
         kputs("Interrupt 0x");
         print_hex(frame->int_no);
         kputs(" triggered.\n    ");
@@ -60,6 +76,8 @@ extern "C" void isr_handler(InterruptFrame *frame) {
 
     while(true) {}
 }
+
+
 
 void Idt::initialize() {
     idt_pointer_.base  = (uint32_t)&idt_entries_;

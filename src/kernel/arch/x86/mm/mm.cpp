@@ -65,12 +65,6 @@ void PageAllocator::initialize() {
 
     // Switch to the new page directory!
     switch_page_directory(((uint32_t)&page_directory) - VIRT_BASE);
-
-    uint32_t *page = map_new_page();
-    for(int i = 0; i < 32; i++) {
-        page = map_new_page();
-    }
-    page[0] = 1;
 }
 
 void PageAllocator::initialize_kernel_pagetables() {
@@ -86,7 +80,6 @@ void PageAllocator::initialize_kernel_pagetables() {
     pageCount += numPageTables + 1;
 
     for (uint32_t pt = 0; pt < numPageTables; pt++) {
-        kprintf("Adding page table: 0x%x\n", pageTableVirtualAddress);
         // Mark the page table's physical address as taken
         set_physical_page_taken(pageTablePhysicalAddress >> 12);
 
@@ -94,8 +87,6 @@ void PageAllocator::initialize_kernel_pagetables() {
         if (numPagesInTable > 1024) {
             numPagesInTable = 1024;
         }
-
-        kprintf("Allocating %d pages\n", numPagesInTable);
 
         // Pointer to the current page table virtual address
         uint32_t *ptPtr = (uint32_t *)pageTableVirtualAddress;
@@ -226,7 +217,6 @@ int PageAllocator::next_free_page() {
         if(kernel_page_map_[i].present) {
             int firstFreePage = kernel_page_map_[i].first_free_page();
             if(firstFreePage >= 0) {
-                kprintf("FF %d\n", firstFreePage);
                 return firstFreePage + (i * 1024);
             }
         }
@@ -237,9 +227,12 @@ int PageAllocator::next_free_page() {
 
 uint32_t* PageAllocator::map_new_page() {
     int nextFreePage = next_free_page();
+    
     if(nextFreePage == -1) {
+        kprintf("No free pages, mapping new table\n");
         map_new_page_table();
         nextFreePage = next_free_page();
+        kprintf("Mapped!\n");
     }
 
     if(nextFreePage < 0) {
@@ -251,15 +244,12 @@ uint32_t* PageAllocator::map_new_page() {
         kpanic("Unable to allocate page- out of memory!");
     }
 
-    kprintf("Next free page: 0x%x\n", nextFreePage);
-    kprintf("Next free physical page: 0x%x\n", nextFreePhysicalPage);
-
     PageFrame frame;
     frame.physical_address = nextFreePhysicalPage;
     frame.present = 1;
     frame.read_write = 1;
 
-    uint32_t pageMapIdx = ((uint32_t)nextFreePage) >> 0x10;
+    uint32_t pageMapIdx = ((uint32_t)nextFreePage) >> 10;
     uint32_t pageIdx = nextFreePage & 0x3FF;
 
     uint32_t *pageTable = kernel_page_map_[pageMapIdx].page_table_virtual_address;
@@ -270,7 +260,10 @@ uint32_t* PageAllocator::map_new_page() {
     set_physical_page_taken(nextFreePhysicalPage);
 
     uint32_t pageAddress = (nextFreePage << 12) + VIRT_BASE;
-    kprintf("Allocated page: 0x%x\n", pageAddress);
+
+    for(int i = 0; i < 1024; i++) {
+        ((uint32_t *)pageAddress)[i] = 0xCAFEBABE;
+    }
 
     return (uint32_t *)pageAddress;
 }
@@ -302,8 +295,8 @@ bool PageAllocator::map_new_page_table() {
     // Identity map the new page table to itself
     PageFrame ptFrame;
     ptFrame.physical_address = nextPhysicalPageIdx;
-    ptFrame.present          = 1;
-    ptFrame.read_write       = 1;
+    ptFrame.present          = true;
+    ptFrame.read_write       = true;
 
     newPageTable[0] = ptFrame.to_uint32();
 
@@ -315,12 +308,14 @@ bool PageAllocator::map_new_page_table() {
     }
 
     PageDirectoryEntry entry;
-    entry.page_table_physical_address = pageTablePhysicalAddress;
+    entry.page_table_physical_address = pageTablePhysicalAddress >> 12;
     entry.present = 1;
     entry.read_write = 1;
-
-    page_directory[nextFreePageDirectoryEntry + (VIRT_BASE >> 22)] = entry.to_uint32();
     
+    uint32_t pageDirectoryIndex = nextFreePageDirectoryEntry + (VIRT_BASE >> 22);
+    page_directory[pageDirectoryIndex] = entry.to_uint32();
+
+    newPageTable = (uint32_t *)(pageDirectoryIndex << 22);
     // Mark the page table's address as taken
     kernel_page_map_[nextFreePageDirectoryEntry].clear();
     kernel_page_map_[nextFreePageDirectoryEntry].set_page_taken(0);
