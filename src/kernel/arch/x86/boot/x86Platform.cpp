@@ -63,3 +63,7 @@ void x86Platform::get_memory_map(MultibootInfo *mbInfo) {
     sizeof(mmap->size) );
     }*/
 }
+
+IPageAllocator* x86Platform::pageAllocator() {
+    return static_cast<IPageAllocator *>(&pageAllocator_);
+}

@@ -225,7 +225,7 @@ int PageAllocator::next_free_page() {
     return -1;
 }
 
-uint32_t* PageAllocator::map_new_page() {
+void* PageAllocator::map_new_page() {
     int nextFreePage = next_free_page();
     
     if(nextFreePage == -1) {
@@ -265,7 +265,7 @@ uint32_t* PageAllocator::map_new_page() {
         ((uint32_t *)pageAddress)[i] = 0xCAFEBABE;
     }
 
-    return (uint32_t *)pageAddress;
+    return (void *)pageAddress;
 }
 
 bool PageAllocator::map_new_page_table() {

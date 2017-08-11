@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "../platform/ibm/phys_virt.h"
+#include "IPageAllocator.h"
 #include "Kernel.h"
 #include "PageMap.h"
 
@@ -62,14 +63,13 @@ struct PageDirectoryEntry {
 
 constexpr uint32_t kernel_page_table_array_size();
 
-class PageAllocator {
+class PageAllocator : public IPageAllocator {
    public:
     PageAllocator();
 
     void initialize();
 
    private:
-
     static uint32_t constexpr kernel_process_space_table_count_ =
         ((((0xFFFFFFFF - VIRT_BASE) + 1) / 4096) / 1024);
 
@@ -94,7 +94,7 @@ class PageAllocator {
     int next_free_page();
 
     void flush_tlb(uint32_t address);
-    int next_free_kernel_page_directory_entry();
-    uint32_t* map_new_page();
-    bool map_new_page_table();
+    int   next_free_kernel_page_directory_entry();
+    void* map_new_page();
+    bool  map_new_page_table();
 };

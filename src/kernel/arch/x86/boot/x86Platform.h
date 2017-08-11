@@ -13,6 +13,7 @@ class x86Platform : public Platform {
     x86Platform(MultibootInfo *pInfo);
 
     TerminalDriver *defaultTerminal();
+    IPageAllocator *pageAllocator();
 
     void initialize();
 
